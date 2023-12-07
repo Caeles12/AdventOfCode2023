@@ -6,7 +6,7 @@
 
 using namespace std;
 
-vector<char> CARD_ORDER{'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'};
+vector<char> CARD_ORDER{'A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J'};
 
 typedef enum
 {
@@ -34,10 +34,18 @@ int indexOf(char c, vector<char> v)
 EHandType getType(string hand)
 {
   int counts[CARD_ORDER.size()]{0};
+  int jokers{0};
 
   for (char c : hand)
   {
-    counts[indexOf(c, CARD_ORDER)]++;
+    if (c == 'J')
+    {
+      jokers++;
+    }
+    else
+    {
+      counts[indexOf(c, CARD_ORDER)]++;
+    }
   }
 
   int associations[6]{0};
@@ -45,6 +53,20 @@ EHandType getType(string hand)
   {
     associations[counts[i]]++;
   }
+
+  if (jokers > 0)
+  {
+    for (int i = 5 - jokers; i >= 0; i--)
+    {
+      if (associations[i] > 0)
+      {
+        associations[i + jokers]++;
+        associations[i]--;
+        break;
+      }
+    }
+  }
+
   if (associations[5] == 1)
   {
     return EHandType::FiveOfAKind;

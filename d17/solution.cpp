@@ -12,6 +12,8 @@
 
 using namespace std;
 
+vector<pair<int, int>> DIRECTIONS{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+
 struct coord
 {
   int x;
@@ -23,55 +25,62 @@ bool inBounds(int x, int y, int rows, int columns)
   return (y >= 0 && y < rows && x >= 0 && x < columns);
 }
 
+string intVectorToString(vector<int> v)
+{
+  string s;
+  for (int i : v)
+  {
+    s += to_string(i) + ';';
+  }
+  return s;
+}
+
 int dijkstra(coord start, coord end, int minStep, int maxStep, vector<vector<int>> &grid)
 {
-  vector<pair<int, int>> dirs{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
   priority_queue<vector<int>, vector<vector<int>>, greater<vector<int>>> minheap;
-  minheap.push({0, start.x, start.y, 0, 0}); // {dist, i, j, dirX, dirY}
-  vector<pair<coord, coord>> seen;
+  minheap.push({0, start.x, start.y, 0, 0}); // {heat, i, j, dirX, dirY}
+  unordered_set<string> seen;
+
+  int height = grid.size();
+  int width = grid[0].size();
+
   while (!minheap.empty())
   {
-    auto curr = minheap.top();
+    vector<int> current = minheap.top();
     minheap.pop();
 
-    int heat = curr[0];
-    int x = curr[1];
-    int y = curr[2];
-    int px = curr[3];
-    int py = curr[4];
+    int heat = current[0];
+    int x = current[1];
+    int y = current[2];
+    int directionX = current[3];
+    int directionY = current[4];
     if (x == end.x && y == end.y)
     {
       return heat;
     }
-    bool alreadySeen = false;
-    for (pair<coord, coord> p : seen)
+
+    string key = intVectorToString({x, y, directionX, directionY});
+
+    if (seen.find(key) == seen.end())
     {
-      if (p.first.x == x && p.first.y == y && p.second.x == px && p.second.y == py)
+      seen.insert(key);
+      for (pair<int, int> direction : DIRECTIONS)
       {
-        alreadySeen = true;
-        break;
-      }
-    }
-    if (!alreadySeen)
-    {
-      seen.push_back({{x, y}, {px, py}});
-      for (pair<int, int> d : dirs)
-      {
-        if (!((d.first == px && d.second == py) || (d.first == -px && d.second == -py)))
+        if (!((direction.first == directionX && direction.second == directionY) || (direction.first == -directionX && direction.second == -directionY)))
         {
           int newX = x;
           int newY = y;
           int newHeat = heat;
           for (int i = 1; i <= maxStep; i++)
           {
-            newX += d.first;
-            newY += d.second;
-            if (inBounds(newX, newY, grid.size(), grid[0].size()))
+            newX += direction.first;
+            newY += direction.second;
+            if (inBounds(newX, newY, height, width))
             {
               newHeat += grid[newY][newX];
               if (i >= minStep)
               {
-                minheap.push({newHeat, newX, newY, d.first, d.second});
+                minheap.push({newHeat, newX, newY, direction.first, direction.second});
               }
             }
           }
@@ -91,7 +100,6 @@ int main(int argc, char *argv[])
   while (file.good())
   {
     getline(file, line);
-    // printf("%s\n", line.c_str());
 
     vector<int> lineNumbers;
     for (char c : line)
@@ -104,6 +112,8 @@ int main(int argc, char *argv[])
   int mapWidth = map[0].size();
   int mapHeight = map.size();
 
-  int res = dijkstra({0, 0}, {mapWidth - 1, mapHeight - 1}, 4, 10, map);
-  printf("%i\n", res);
+  int part1 = dijkstra({0, 0}, {mapWidth - 1, mapHeight - 1}, 1, 3, map);
+  printf("Heat loss for a maximum of 3 blocks in a single direction: %i.\n", part1);
+  int part2 = dijkstra({0, 0}, {mapWidth - 1, mapHeight - 1}, 4, 10, map);
+  printf("Heat loss for a maximum of 10 blocks and a minimum of 4 blocks in a single direction: %i.\n", part2);
 }
